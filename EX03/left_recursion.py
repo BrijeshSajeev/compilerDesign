@@ -1,5 +1,10 @@
 gram = {}
+
 def add(str):
+    # Parses a grammar rule string and adds it to the grammar dictionary.
+    # Replaces whitespace, splits on '->' to separate left and right sides, 
+    # splits the right side on '|' to handle multiple productions.
+    # Finally stores the rule in the grammar dict.
     str = str.replace(" ", "").replace(" ", "").replace("\n", "")
     x = str.split("->")
     y = x[1]
@@ -9,6 +14,15 @@ def add(str):
     gram[x[0]]=x[1]
 
 def removeDirectLR(gramA, A):
+    # Removes direct left recursion from the grammar rule A in gramA.
+    # Splits the rule into two rules, one recursive and one not.
+    # temp stores the original productions for A.
+    # tempCr holds productions that don't start with A after the split.
+    # tempInCr holds productions that start with A after the split.
+    # The new recursive rule A' is created to hold the left recursive productions.
+    # e is appended to A' to allow it to derive empty string.
+    # The original rule A is updated to hold the non-left recursive productions.
+    # The new rule A' is added to the grammar.
     temp = gramA[A]
     tempCr = []
     tempInCr = []
@@ -23,7 +37,18 @@ def removeDirectLR(gramA, A):
     gramA[A] = tempCr
     gramA[A+"'"] = tempInCr
     return gramA
+
 def checkForIndirect(gramA, a, ai):
+    # Checks if there is indirect left recursion between nonterminals a and ai in grammar gramA.
+    # Returns True if ai derives a, False otherwise.
+    # Base cases:
+    # - If ai is not in gramA, it cannot derive anything, so return False.  
+    # - If a == ai, ai derives itself, so return True.
+    # Recursive case:
+    # - Iterate through the productions of ai.  
+    #   - If any production has ai as its first symbol, ai has direct left recursion so return False.
+    #   - If any production's first symbol derives a, return True.
+    # - If we don't find any productions matching the above cases, ai does not derive a, so return False.
     if ai not in gramA:
         return False
     if a == ai:
@@ -35,6 +60,14 @@ def checkForIndirect(gramA, a, ai):
             return checkForIndirect(gramA, a, i[0])
     return False
 def rep(gramA, A):
+    # Removes indirect left recursion between nonterminal A and other nonterminals in grammar gramA.
+    # Iterates through the productions for A.  
+    # For each production, checks if its first symbol derives A indirectly using checkForIndirect().
+    # If it does, expands that production by generating new productions with the symbols that derive the first symbol appended.
+    # Adds the new expanded productions to newTemp.
+    # If the first symbol does not derive A indirectly, just adds the original production to newTemp.
+    # Replaces the productions for A in gramA with newTemp.
+    # Returns the updated grammar.
     temp = gramA[A]
     newTemp = []
     for i in temp:
@@ -51,6 +84,11 @@ def rep(gramA, A):
     return gramA
 
 def rem(gram):
+    # Removes left recursion from the given grammar 'gram'
+    # by eliminating direct left recursion and replacing indirect left recursion 
+    # with equivalent right recursive rules.
+    #
+    # Returns the grammar without left recursion.
     c = 1
     conv = {}
     gramA = {}
