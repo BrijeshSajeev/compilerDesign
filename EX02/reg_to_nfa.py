@@ -1,69 +1,221 @@
-class State:
-    def __init__(self, label=None):
-        self.transitions = {}
-        self.epsilon_transitions = set()
-        self.label = label
+inp = "((e+a).b*)*"#input("")
+_="-"
+start = 1 # denotes start of e-nfa table
+end = 1 # denotes end of our table which is initially same as start
+cur = 1 # denotes current position of our pointer
+table = [["state","epsilon","a","b"],[1,_,_,_]]
 
-class NFA:
-    def __init__(self, start_state, accept_states):
-        self.start_state = start_state
-        self.accept_states = accept_states
+def print_t(table):
+    i = table [0]
+    print(f'{i[0]: <10}'+f'| {i[1]: <10}'+f'| {i[2]: <10}'+f'| {i[3]: <10}')
+    print("-"*46)
+    for i in table[1:]:
+        try:
+            x = " ".join([str(j) for j in i[1]])
+        except:
+            x = ""
+        try:
+            y = " ".join([str(j) for j in i[2]])
+        except:
+            y = ""
+        try:
+            z = " ".join([str(j) for j in i[3]])
+        except:
+            z = ""
+        print(f'{i[0]: <10}'+f'| {x: <10}'+f'| {y: <10}'+f'| {z: <10}')
 
-def regex_to_nfa(regex):
-    stack = []
-    postfix = infix_to_postfix(regex)
+def e_(cur,ed=end):
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1].append(cur+1),temp[2],temp[3]]
+    except:
+        table[cur] = [cur,[cur+1],temp[2],temp[3]]
+    try:
+        nv = table([cur+1])
+    except:
+        table.append([ed+1,_,_,_])
+        ed+=1
+    return ed
 
-    for symbol in postfix:
-        if symbol.isalpha():
-            state = State(label=symbol)
-            stack.append(state)
-        elif symbol == '|':
-            state2 = stack.pop()
-            state1 = stack.pop()
-            new_start = State()
-            new_start.epsilon_transitions.update([state1, state2])
-            stack.append(new_start)
-        elif symbol == '*':
-            state1 = stack.pop()
-            new_start = State()
-            new_accept = State()
-            new_start.epsilon_transitions.update([state1, new_accept])
-            state1.epsilon_transitions.update([new_start, new_accept])
-            stack.append(new_start)
+def a_(cur,ed=end):
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1],temp[2].append(cur+1),temp[3]]
+    except:
+        table[cur] = [cur,temp[1],[cur+1],temp[3]]
+    try:
+        nv = table([cur+1])
+    except:
+        table.append([ed+1,_,_,_])
+        ed+=1
+    return ed
+
+def b_(cur,ed=end):
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1],temp[2],temp[3].append(cur+1)]
+    except:
+        table[cur] = [cur,temp[1],temp[2],[cur+1]]
+    try:
+        nv = table([cur+1])
+    except:
+        table.append([ed+1,_,_,_])
+        ed+=1
+    return ed
+
+def or_b(cur,ed=end):
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1],temp[2],temp[3].append(cur+1)]
+    except:
+        table[cur] = [cur,temp[1],temp[2],[cur+1]]
+def or_a(cur,ed=end):
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1],temp[2].append(cur+1),temp[3]]
+    except:
+        table[cur] = [cur,temp[1],[cur+1],temp[3]]
+
+def and_a(cur,ed=end):
+    cur+=1
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1],temp[2].append(cur+1),temp[3]]
+    except:
+        table[cur] = [cur,temp[1],[cur+1],temp[3]]
+    try:
+        nv = table([cur+1])
+    except:
+        table.append([cur+1,_,_,_])
+        ed+=1
+    return cur,ed
+
+def and_b(cur,ed=end):
+    cur+=1
+    temp = table[cur]
+    try:
+        table[cur] = [cur,temp[1],temp[2],temp[3].append(cur+1)]
+    except:
+        table[cur] = [cur,temp[1],temp[2],[cur+1]]
+    try:
+        nv = table([cur+1])
+    except:
+        table.append([cur+1,_,_,_])
+        ed+=1
+    return cur,ed
+
+def star(cur,ed=end):
+    table.append([ed+1,_,_,_])
+    table.append([ed+2,_,_,_])
+    ed+=2
+    for i in range(cur,ed):
+        temp = [table[ed-i+cur][0]]+table[ed-i+cur-1][1:4]
+        for j in [1,2,3]:
+            try:
+                temp[j] = [x+1 for x in table[ed-i+cur-1][j]]
+            except:
+                pass
+        table[ed-i+cur] = temp
+    table[cur]=[cur,_,_,_]
+    
+    temp = table[cur]
+    try:
+        table[cur] = [temp[0],temp[1]+[cur+1,ed],temp[2],temp[3]]
+    except:
+        table[cur] = [temp[0],[cur+1,ed],temp[2],temp[3]]
+    temp = table[ed-1]
+    try:
+        table[ed-1] = [temp[0],temp[1]+[cur+1,ed],temp[2],temp[3]]
+    except:
+        table[ed-1] = [temp[0],[cur+1,ed],temp[2],temp[3]]
+    return ed-1,ed
+
+
+def mod_table(inp,start,cur,end,table):
+    #print(inp)
+    k = 0
+    while k<len(inp):
+        #print(start,cur,end,k,inp[k:],len(table)-1)
+        if inp[k]=="a":
+            end = a_(cur,end)
+        #print("in a_")
+        elif inp[k]=="b":
+            end = b_(cur,end)
+        #print("in b_")
+        elif inp[k]=="e":
+            end = e_(cur,end)
+        elif inp[k]==".":
+            k+=1
+            if inp[k]=="a":
+            #k-=1
+                cur,end = and_a(cur,end)
+            elif inp[k]=="b":
+                cur,end = and_b(cur,end)
+            #k-=1
+            elif inp[k]=="(":
+                li = ["("]
+                l = k
+                for i in inp[k+1:]:
+                    if i == "(":
+                        li.append("(")
+                    if i == ")":
+                        try:
+                            del li[-1]
+                        except:
+                            break
+                    if len(li)==0:
+                        break
+                    l+=1
+                m = k
+                k=l+1
+                cur+=1
+                start,cur,end,table = mod_table(inp[m+1:l+1],start,cur,end,table)
+        elif inp[k]=="+":
+            k+=1
+            if inp[k]=="a":
+                or_a(cur,end)
+            #print("in or_a")
+            elif inp[k]=="b":        
+                or_b(cur,end)
+                #print("in or_b")
+            else:
+                print(f"ERROR at{k }Done:{inp[:k+1]}Rem{inp[k+1:]}")
+        elif inp[k]=="*":
+            #print("in star")
+            cur,end = star(cur,end)
+        elif inp[k]=="(":
+            li = ["("]
+            l = k
+            for i in inp[k+1:]:
+                if i == "(":
+                    li.append("(")
+                if i == ")":
+                    try:
+                        del li[-1]
+                    except:
+                        break
+                if len(li)==0:
+                    break
+                l+=1
+            m = k
+            k=l+1
+            try:
+                if inp[k+1]=="*":
+                    cur_ = cur
+            except:
+                pass
+            #print(inp[m+1:l+1])
+            start,cur,end,table = mod_table(inp[m+1:l+1],start,cur,end,table)
+            try:
+                if inp[k+1]=="*":
+                    cur = cur_
+            except:
+                pass
         else:
-            raise ValueError(f"Invalid symbol in regular expression: {symbol}")
+            print(f'error{k}{inp[k]}')
+        k+=1
+    return start,cur,end,table
 
-    if len(stack) == 1:
-        raise ValueError("Invalid regular expression")
 
-    return NFA(stack[0], {state for state in stack[0].epsilon_transitions if not state.epsilon_transitions})
-
-def infix_to_postfix(infix):
-    precedence = {'*': 2, '|': 1, '(': 0}
-    output = []
-    operator_stack = []
-
-    for symbol in infix:
-        if symbol.isalpha():
-            output.append(symbol)
-        elif symbol == '(':
-            operator_stack.append(symbol)
-        elif symbol == ')':
-            while operator_stack and operator_stack[-1] != '(':
-                output.append(operator_stack.pop())
-            operator_stack.pop()  # Discard the '('
-        else:
-            while operator_stack and precedence[operator_stack[-1]] >= precedence[symbol]:
-                output.append(operator_stack.pop())
-            operator_stack.append(symbol)
-
-    while operator_stack:
-        output.append(operator_stack.pop())
-
-    return output
-
-# Example usage
-regex = "(a|b)*a*b"
-
-nfa = regex_to_nfa(regex)
-print(infix_to_postfix(regex))
+start,cur,end,table = mod_table(inp,start,cur,end,table)
+print_t(table)
