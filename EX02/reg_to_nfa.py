@@ -1,221 +1,129 @@
-inp = "((e+a).b*)*"#input("")
-_="-"
-start = 1 # denotes start of e-nfa table
-end = 1 # denotes end of our table which is initially same as start
-cur = 1 # denotes current position of our pointer
-table = [["state","epsilon","a","b"],[1,_,_,_]]
-
-def print_t(table):
-    i = table [0]
-    print(f'{i[0]: <10}'+f'| {i[1]: <10}'+f'| {i[2]: <10}'+f'| {i[3]: <10}')
-    print("-"*46)
-    for i in table[1:]:
-        try:
-            x = " ".join([str(j) for j in i[1]])
-        except:
-            x = ""
-        try:
-            y = " ".join([str(j) for j in i[2]])
-        except:
-            y = ""
-        try:
-            z = " ".join([str(j) for j in i[3]])
-        except:
-            z = ""
-        print(f'{i[0]: <10}'+f'| {x: <10}'+f'| {y: <10}'+f'| {z: <10}')
-
-def e_(cur,ed=end):
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1].append(cur+1),temp[2],temp[3]]
-    except:
-        table[cur] = [cur,[cur+1],temp[2],temp[3]]
-    try:
-        nv = table([cur+1])
-    except:
-        table.append([ed+1,_,_,_])
-        ed+=1
-    return ed
-
-def a_(cur,ed=end):
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1],temp[2].append(cur+1),temp[3]]
-    except:
-        table[cur] = [cur,temp[1],[cur+1],temp[3]]
-    try:
-        nv = table([cur+1])
-    except:
-        table.append([ed+1,_,_,_])
-        ed+=1
-    return ed
-
-def b_(cur,ed=end):
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1],temp[2],temp[3].append(cur+1)]
-    except:
-        table[cur] = [cur,temp[1],temp[2],[cur+1]]
-    try:
-        nv = table([cur+1])
-    except:
-        table.append([ed+1,_,_,_])
-        ed+=1
-    return ed
-
-def or_b(cur,ed=end):
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1],temp[2],temp[3].append(cur+1)]
-    except:
-        table[cur] = [cur,temp[1],temp[2],[cur+1]]
-def or_a(cur,ed=end):
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1],temp[2].append(cur+1),temp[3]]
-    except:
-        table[cur] = [cur,temp[1],[cur+1],temp[3]]
-
-def and_a(cur,ed=end):
-    cur+=1
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1],temp[2].append(cur+1),temp[3]]
-    except:
-        table[cur] = [cur,temp[1],[cur+1],temp[3]]
-    try:
-        nv = table([cur+1])
-    except:
-        table.append([cur+1,_,_,_])
-        ed+=1
-    return cur,ed
-
-def and_b(cur,ed=end):
-    cur+=1
-    temp = table[cur]
-    try:
-        table[cur] = [cur,temp[1],temp[2],temp[3].append(cur+1)]
-    except:
-        table[cur] = [cur,temp[1],temp[2],[cur+1]]
-    try:
-        nv = table([cur+1])
-    except:
-        table.append([cur+1,_,_,_])
-        ed+=1
-    return cur,ed
-
-def star(cur,ed=end):
-    table.append([ed+1,_,_,_])
-    table.append([ed+2,_,_,_])
-    ed+=2
-    for i in range(cur,ed):
-        temp = [table[ed-i+cur][0]]+table[ed-i+cur-1][1:4]
-        for j in [1,2,3]:
-            try:
-                temp[j] = [x+1 for x in table[ed-i+cur-1][j]]
-            except:
-                pass
-        table[ed-i+cur] = temp
-    table[cur]=[cur,_,_,_]
+# def reg_to_nfa(reg_exp):
+#     nfa = []
     
-    temp = table[cur]
-    try:
-        table[cur] = [temp[0],temp[1]+[cur+1,ed],temp[2],temp[3]]
-    except:
-        table[cur] = [temp[0],[cur+1,ed],temp[2],temp[3]]
-    temp = table[ed-1]
-    try:
-        table[ed-1] = [temp[0],temp[1]+[cur+1,ed],temp[2],temp[3]]
-    except:
-        table[ed-1] = [temp[0],[cur+1,ed],temp[2],temp[3]]
-    return ed-1,ed
+#     # Add opening parentheses 
+#     reg_exp = reg_exp.replace('(', '( ')
+    
+#     # Add closing parentheses
+#     reg_exp = reg_exp.replace(')', ' )')
+    
+#     # Split the regular expression into tokens
+#     reg_exp = reg_exp.split()
+    
+#     # Create NFA states for each token
+#     for i, token in enumerate(reg_exp):
+#         if token == '(':
+#             nfa.append(['(', i])
+#         elif token == ')':
+#             nfa.append([')', i])
+#         elif token == '|':
+#             nfa.append(['|', i])
+#         elif token == '*':
+#             nfa.append(['*', i])
+#         elif token == '+':
+#             nfa.append(['+', i])
+#         elif token == '?':
+#             nfa.append(['?', i])
+#         else:
+#             nfa.append([token, i])
+#     return nfa
 
 
-def mod_table(inp,start,cur,end,table):
-    #print(inp)
-    k = 0
-    while k<len(inp):
-        #print(start,cur,end,k,inp[k:],len(table)-1)
-        if inp[k]=="a":
-            end = a_(cur,end)
-        #print("in a_")
-        elif inp[k]=="b":
-            end = b_(cur,end)
-        #print("in b_")
-        elif inp[k]=="e":
-            end = e_(cur,end)
-        elif inp[k]==".":
-            k+=1
-            if inp[k]=="a":
-            #k-=1
-                cur,end = and_a(cur,end)
-            elif inp[k]=="b":
-                cur,end = and_b(cur,end)
-            #k-=1
-            elif inp[k]=="(":
-                li = ["("]
-                l = k
-                for i in inp[k+1:]:
-                    if i == "(":
-                        li.append("(")
-                    if i == ")":
-                        try:
-                            del li[-1]
-                        except:
-                            break
-                    if len(li)==0:
-                        break
-                    l+=1
-                m = k
-                k=l+1
-                cur+=1
-                start,cur,end,table = mod_table(inp[m+1:l+1],start,cur,end,table)
-        elif inp[k]=="+":
-            k+=1
-            if inp[k]=="a":
-                or_a(cur,end)
-            #print("in or_a")
-            elif inp[k]=="b":        
-                or_b(cur,end)
-                #print("in or_b")
-            else:
-                print(f"ERROR at{k }Done:{inp[:k+1]}Rem{inp[k+1:]}")
-        elif inp[k]=="*":
-            #print("in star")
-            cur,end = star(cur,end)
-        elif inp[k]=="(":
-            li = ["("]
-            l = k
-            for i in inp[k+1:]:
-                if i == "(":
-                    li.append("(")
-                if i == ")":
-                    try:
-                        del li[-1]
-                    except:
-                        break
-                if len(li)==0:
-                    break
-                l+=1
-            m = k
-            k=l+1
-            try:
-                if inp[k+1]=="*":
-                    cur_ = cur
-            except:
-                pass
-            #print(inp[m+1:l+1])
-            start,cur,end,table = mod_table(inp[m+1:l+1],start,cur,end,table)
-            try:
-                if inp[k+1]=="*":
-                    cur = cur_
-            except:
-                pass
-        else:
-            print(f'error{k}{inp[k]}')
-        k+=1
-    return start,cur,end,table
 
 
-start,cur,end,table = mod_table(inp,start,cur,end,table)
-print_t(table)
+# def print_nfa_transitions(nfa_states):
+
+#     print("NFA transitions:")
+
+#     for i in range(len(nfa_states)-1):
+#         cur_state = nfa_states[i]
+#         next_state = nfa_states[i+1]
+        
+#         if cur_state[0] == '*' or next_state[0] == '(':
+#             print(f"{cur_state[1]} -> {next_state[1]} on epsilon")
+            
+#         elif next_state[0] == ')':
+#             print(f"{cur_state[1]} -> {nfa_states[-1][1]} on epsilon")
+            
+#         elif cur_state[0] == '|':
+#             print(f"{nfa_states[i-1][1]} -> {next_state[1]} on {next_state[0]}")
+            
+#         else:
+#             print(f"{cur_state[1]} -> {next_state[1]} on {next_state[0]}")
+
+# # reg_exp = "a*(b|c)"
+# # nfa = reg_to_nfa(reg_exp)
+# # print(nfa)
+
+# if __name__ == '__main__':
+
+#     reg_exp = "a * ( b | c ) "
+#     nfa = reg_to_nfa(reg_exp)
+#     print(nfa)
+#     print_nfa_transitions(nfa)
+
+# def regex_to_nfa(regex):
+#     nfa = {'states': [], 'transitions': [], 'start': 0, 'accepting': []}
+    
+#     state = 0
+#     for char in regex:
+#         if char.isalpha():
+#             nfa['states'].append(state)
+#             nfa['transitions'].append((state, char, state+1))
+#             state += 1
+        
+#         elif char == '*':
+#             nfa['states'].append(state)
+#             nfa['transitions'].append((state-1, 'ε', state))
+#             nfa['transitions'].append((state, 'ε', state-1))
+#             state += 1
+        
+#         elif char == '|':
+#             nfa['states'].append(state) 
+#             nfa['transitions'].append((state-1, 'ε', state))
+#             nfa['transitions'].append((state, 'ε', state+1))
+#             state += 1
+            
+#     nfa['accepting'].append(state-1)
+#     if char.isalpha():
+#   # Add transition on char
+#         nfa['transitions'].append((state, char, state+1)) 
+#     return nfa
+    
+def regex_to_nfa(regex):
+
+  nfa = {'states': [], 
+         'transitions': [],
+         'start': 0,
+         'accepting': []}
+  
+  state = 0
+  for char in regex:
+  
+    if char.isalpha():
+      nfa['states'].append(state)
+      nfa['transitions'].append((state, char, state+1))
+      state += 1
+  
+    elif char == '*':
+      nfa['states'].append(state)
+      nfa['transitions'].append((state-1, 'ε', state))
+      nfa['transitions'].append((state, 'ε', state-1))
+      
+      # Fix: Add epsilon transition to continue chain
+      if state < len(nfa['states']):
+        nfa['transitions'].append((state, 'ε', state+1))
+        
+      state += 1
+  
+    elif char == '|':
+      # ...logic for alternation  
+      
+        nfa['accepting'].append(state-1)
+    
+  return nfa
+
+
+regex = "a*(b|c)"
+nfa = regex_to_nfa(regex)
+print(nfa)
